@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using ms.MovieInfo.Models;
-using MySql.Data;
+using Npgsql;
 
 namespace ms.MovieInfo
 {
+    // guide https://github.com/dalegambill/PostgreSql_and_Csharp/blob/master/PostgreSQL/PostGreSQL.cs
     public class MoviePersistence
     {
-        private MySql.Data.MySqlClient.MySqlConnection conn;
+        Movie dummyMovie = new Movie();
+        private NpgsqlConnection conn;
 
         public MoviePersistence()
         {
@@ -24,11 +26,10 @@ namespace ms.MovieInfo
             myConnectionString = String.Format("server={0};port={1};user id={2}; password={3}; database={4};", server, port, user, password, database);
             try
             {
-                conn = new MySql.Data.MySqlClient.MySqlConnection();
-                conn.ConnectionString = myConnectionString;
+                conn = new NpgsqlConnection(myConnectionString);
                 conn.Open();
             }
-            catch (MySql.Data.MySqlClient.MySqlException ex)
+            catch (NpgsqlException ex)
             {
 
             }
@@ -39,59 +40,66 @@ namespace ms.MovieInfo
         {
             string sqlString = "INSERT INTO `Movies`() VALUES ()";
 
-            MySql.Data.MySqlClient.MySqlCommand cmd = new MySql.Data.MySqlClient.MySqlCommand(sqlString, conn);
+            NpgsqlCommand cmd = new NpgsqlCommand(sqlString, conn);
             cmd.ExecuteNonQuery();
-            return cmd.LastInsertedId;
+            return 1;
 
 
         }
         
-        public long deleteMovie(int id)
+        public void deleteMovie(int id)
 
         {
             string sqlString = "Delete INTO `Movies`() VALUES ()";
 
-            MySql.Data.MySqlClient.MySqlCommand cmd = new MySql.Data.MySqlClient.MySqlCommand(sqlString, conn);
+            NpgsqlCommand cmd = new NpgsqlCommand(sqlString, conn);
             cmd.ExecuteNonQuery();
-            return cmd.LastInsertedId;
+          
 
 
         }
         // Search on title, handle input error, will always return a list.
-        public long SearchForMovie(String title)
+        public List<Movie> SearchForMovie(String title)
 
         {
-            string sqlString = "Select From `Movies' WHERE ID =";
+            List<Movie> movies = new List<Movie>();
+            string sqlString = "Select From `Movies' WHERE title =";
+            Movie m = new Movie();
 
-            MySql.Data.MySqlClient.MySqlCommand cmd = new MySql.Data.MySqlClient.MySqlCommand(sqlString, conn);
-            cmd.ExecuteNonQuery();
-            return cmd.LastInsertedId;
+            NpgsqlCommand cmd = new NpgsqlCommand(sqlString, conn);
+            NpgsqlDataReader dataReader = cmd.ExecuteReader();
+            for (int i = 0; dataReader.Read(); i++)
+            {
+                m.ID = (int)dataReader[0];
+                m.title = dataReader[1].ToString();
+                movies.Add(m);
+            }
+            return movies;
 
 
         }
         //
-        public long findOneMovie(int id)
+        public Movie findOneMovie(int id)
 
         {
             string sqlString = "Select From `Movies' WHERE ID =";
 
-            MySql.Data.MySqlClient.MySqlCommand cmd = new MySql.Data.MySqlClient.MySqlCommand(sqlString, conn);
+            NpgsqlCommand cmd = new NpgsqlCommand(sqlString, conn);
             cmd.ExecuteNonQuery();
-            return cmd.LastInsertedId;
+           
+            return dummyMovie;
 
 
         }
    
         // Update movie bases on ID.
-        public long updateMovie(int id, Movie movieToDelete)
+        public void updateMovie(int id, Movie movieToDelete)
 
         {
             string sqlString = "Delete INTO `Movies`() VALUES ()";
 
-            MySql.Data.MySqlClient.MySqlCommand cmd = new MySql.Data.MySqlClient.MySqlCommand(sqlString, conn);
-            cmd.ExecuteNonQuery();
-            return cmd.LastInsertedId;
-
+            NpgsqlCommand cmd = new NpgsqlCommand(sqlString, conn);
+            cmd.ExecuteNonQuery();          
 
         }
     }
